@@ -191,4 +191,4 @@ MIT
 
 ## Muallif
 
-Hot Dog Shahobchasi Tizimi
+Nusratov Alisher
