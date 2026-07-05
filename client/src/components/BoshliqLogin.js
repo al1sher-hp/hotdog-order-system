@@ -8,6 +8,10 @@ function BoshliqLogin() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [needsPasswordChange, setNeedsPasswordChange] = useState(false);
+    const [token, setToken] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -38,6 +42,13 @@ function BoshliqLogin() {
             localStorage.setItem('userRole', response.data.role);
             localStorage.setItem('username', response.data.username);
 
+            if (response.data.mustChangePassword) {
+                setToken(response.data.token);
+                setNeedsPasswordChange(true);
+                setLoading(false);
+                return;
+            }
+
             // Navigate to dashboard
             navigate('/boshliq/dashboard');
         } catch (error) {
@@ -46,6 +57,72 @@ function BoshliqLogin() {
             setLoading(false);
         }
     };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+
+        if (!newPassword || newPassword !== confirmPassword) {
+            setError('Yangi parollar mos emas');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            await axios.post('/api/auth/change-password',
+                { currentPassword: password, newPassword },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            navigate('/boshliq/dashboard');
+        } catch (error) {
+            console.error('Change password error:', error);
+            setError(error.response?.data?.error || 'Parolni almashtirishda xato');
+            setLoading(false);
+        }
+    };
+
+    if (needsPasswordChange) {
+        return (
+            <div className="hodim-login-container">
+                <div className="login-card">
+                    <h1>Yangi parol o'rnating</h1>
+                    <p>Birinchi kirishda parolni almashtirish talab qilinadi.</p>
+
+                    <form onSubmit={handleChangePassword}>
+                        <input
+                            type="password"
+                            className="input-field"
+                            placeholder="Yangi parol"
+                            value={newPassword}
+                            onChange={(e) => {
+                                setNewPassword(e.target.value);
+                                setError('');
+                            }}
+                        />
+
+                        <input
+                            type="password"
+                            className="input-field"
+                            placeholder="Yangi parolni tasdiqlang"
+                            value={confirmPassword}
+                            onChange={(e) => {
+                                setConfirmPassword(e.target.value);
+                                setError('');
+                            }}
+                        />
+
+                        {error && <div className="error-message">{error}</div>}
+
+                        <button type="submit" className="btn btn-primary btn-large" disabled={loading}>
+                            {loading ? 'Yuklanmoqda...' : 'Parolni almashtirish'}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="hodim-login-container">
