@@ -7,14 +7,6 @@ function Ekran() {
     const [preparingOrders, setPreparingOrders] = useState([]);
     const [readyOrders, setReadyOrders] = useState([]);
 
-    const markAsGiven = useCallback(async (orderId) => {
-        try {
-            await axios.post(`/api/mark-as-given/${orderId}`);
-        } catch (error) {
-            console.error('Mark as given error:', error);
-        }
-    }, []);
-
     const fetchOrders = useCallback(async () => {
         try {
             const response = await axios.get('/api/active-orders');
@@ -25,17 +17,10 @@ function Ekran() {
 
             setPreparingOrders(preparing);
             setReadyOrders(ready);
-
-            // Auto-remove ready orders after 60 seconds
-            ready.forEach(order => {
-                setTimeout(() => {
-                    markAsGiven(order.id);
-                }, 60000);
-            });
         } catch (error) {
             console.error('Fetch orders error:', error);
         }
-    }, [markAsGiven]);
+    }, []);
 
     useEffect(() => {
         // Fetch initial orders

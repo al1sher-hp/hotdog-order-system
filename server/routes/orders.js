@@ -159,8 +159,8 @@ router.get('/active-orders', async (req, res) => {
     }
 });
 
-// Mark order as given (auto-called from frontend after 60s)
-router.post('/mark-as-given/:id', async (req, res) => {
+// Mark order as given (employee)
+router.post('/mark-as-given/:id', authMiddleware, async (req, res) => {
     try {
         const order = await Order.findOne({ id: req.params.id });
 
