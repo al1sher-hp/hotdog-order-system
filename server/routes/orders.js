@@ -3,15 +3,49 @@ const router = express.Router();
 const QRCode = require('qrcode');
 const Order = require('../models/Order');
 const Ingredient = require('../models/Ingredient');
+const Menu = require('../models/Menu');
 const { authMiddleware } = require('../middleware/auth');
 
 // Create order (customer)
 router.post('/create-order', async (req, res) => {
     try {
-        const { ism, items, total } = req.body;
+        const { ism, items } = req.body;
 
-        if (!ism || !items || !total) {
+        if (!ism || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Barcha maydonlar to\'ldirilishi shart' });
+        }
+
+        const menu = await Menu.findOne();
+        if (!menu) {
+            return res.status(400).json({ error: 'Menyu topilmadi' });
+        }
+
+        const menuItemsById = new Map();
+        menu.sections.forEach(section => {
+            section.items.forEach(item => menuItemsById.set(item._id, item));
+        });
+
+        const orderItems = [];
+        let total = 0;
+
+        for (const reqItem of items) {
+            const menuItem = menuItemsById.get(reqItem._id);
+            if (!menuItem) {
+                return res.status(400).json({ error: `Menyuda topilmadi: ${reqItem._id}` });
+            }
+
+            const quantity = parseInt(reqItem.quantity, 10);
+            if (!Number.isInteger(quantity) || quantity <= 0) {
+                return res.status(400).json({ error: 'Noto\'g\'ri miqdor' });
+            }
+
+            orderItems.push({
+                name: menuItem.name,
+                quantity,
+                price: menuItem.price
+            });
+
+            total += menuItem.price * quantity;
         }
 
         const orderId = Date.now().toString();
@@ -19,7 +53,7 @@ router.post('/create-order', async (req, res) => {
         const order = new Order({
             id: orderId,
             ism,
-            items,
+            items: orderItems,
             total,
             status: 'pending'
         });
@@ -99,6 +133,10 @@ router.post('/complete-order/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Buyurtma topilmadi' });
         }
 
+        if (order.status !== 'tayyorlanmoqda') {
+            return res.status(400).json({ error: 'Buyurtma hali tasdiqlanmagan yoki allaqachon tayyor' });
+        }
+
         order.status = 'tayyor';
         await order.save();
 
@@ -125,8 +163,8 @@ router.get('/active-orders', async (req, res) => {
     }
 });
 
-// Mark order as given (auto-called from frontend after 60s)
-router.post('/mark-as-given/:id', async (req, res) => {
+// Mark order as given (employee)
+router.post('/mark-as-given/:id', authMiddleware, async (req, res) => {
     try {
         const order = await Order.findOne({ id: req.params.id });
 

@@ -62,7 +62,8 @@ mongoose.connect(process.env.MONGO_URI, {
             const admin = new User({
                 username: 'boshliq',
                 password: hashedPassword,
-                role: 'admin'
+                role: 'admin',
+                mustChangePassword: true
             });
             await admin.save();
             console.log('Default admin yaratildi: boshliq / admin123');

@@ -59,15 +59,13 @@ function MijozSavat() {
         try {
             const customerName = localStorage.getItem('customerName');
             const items = cart.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price
+                _id: item._id,
+                quantity: item.quantity
             }));
 
             const response = await axios.post('/api/create-order', {
                 ism: customerName,
-                items,
-                total: calculateTotal()
+                items
             });
 
             // Save QR code and order ID
@@ -81,7 +79,7 @@ function MijozSavat() {
             navigate('/qr');
         } catch (error) {
             console.error('Buyurtma berish xatosi:', error);
-            setError('Buyurtma berishda xato yuz berdi');
+            setError(error.response?.data?.error || 'Buyurtma berishda xato yuz berdi');
             setLoading(false);
         }
     };

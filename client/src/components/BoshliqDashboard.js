@@ -160,7 +160,7 @@ function BoshliqDashboard() {
         e.preventDefault();
         try {
             const response = await axios.post('/api/admin/add-user', newUser);
-            setSuccess(`Hodim qo\'shildi! Parol: ${response.data.generatedPassword || newUser.password}`);
+            setSuccess(`Hodim qo'shildi! Parol: ${response.data.generatedPassword || newUser.password}`);
             setNewUser({ username: '', password: '', role: 'hodim' });
             fetchUsers();
         } catch (error) {
