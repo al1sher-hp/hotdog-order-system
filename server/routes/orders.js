@@ -133,6 +133,10 @@ router.post('/complete-order/:id', authMiddleware, async (req, res) => {
             return res.status(404).json({ error: 'Buyurtma topilmadi' });
         }
 
+        if (order.status !== 'tayyorlanmoqda') {
+            return res.status(400).json({ error: 'Buyurtma hali tasdiqlanmagan yoki allaqachon tayyor' });
+        }
+
         order.status = 'tayyor';
         await order.save();
 
